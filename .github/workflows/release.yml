@@ -5,6 +5,19 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish a GitHub release when manually triggered'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+          - 'no'
+          - 'yes'
+      release_tag:
+        description: 'Tag to use for the release when publishing manually (defaults to add-on version)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -37,6 +50,22 @@ jobs:
           echo "id=$ADDON_ID" >> "$GITHUB_OUTPUT"
           echo "version=$ADDON_VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Determine release tag
+        id: release_tag
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.publish_release }}" == "yes" ]]; then
+            if [[ -n "${{ inputs.release_tag }}" ]]; then
+              TAG_NAME="${{ inputs.release_tag }}"
+            else
+              TAG_NAME="v${{ steps.metadata.outputs.version }}"
+            fi
+          fi
+
+          echo "Using tag: ${TAG_NAME}"
+          echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+
       - name: Create distributable ZIP
         run: |
           ADDON_ID="${{ steps.metadata.outputs.id }}"
@@ -61,11 +90,11 @@ jobs:
           path: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
 
       - name: Publish release asset
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
         uses: softprops/action-gh-release@v2
         with:
           files: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ steps.release_tag.outputs.tag }}
           name: Koozer ${{ steps.metadata.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
