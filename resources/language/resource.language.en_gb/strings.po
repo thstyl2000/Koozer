@@ -1,0 +1,45 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Koozer\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: English (UK)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgctxt "#32000"
+msgid "Top Tracks"
+msgstr "Top Tracks"
+
+msgctxt "#32001"
+msgid "Charts"
+msgstr "Charts"
+
+msgctxt "#32002"
+msgid "Settings"
+msgstr "Settings"
+
+msgctxt "#32003"
+msgid "Add-on settings"
+msgstr "Add-on settings"
+
+msgctxt "#32004"
+msgid "Missing preview URL"
+msgstr "Missing preview URL"
+
+msgctxt "#32005"
+msgid "Preview not available"
+msgstr "Preview not available"
+
+msgctxt "#32010"
+msgid "Preferred country code"
+msgstr "Preferred country code"
+
+msgctxt "#32011"
+msgid "Number of chart tracks"
+msgstr "Number of chart tracks"
+
+msgctxt "#32012"
+msgid "Leave blank to use the global chart"
+msgstr "Leave blank to use the global chart"
