@@ -25,6 +25,14 @@ Kodi Deezer Add-on built following [official Kodi development guidelines](https:
    pytest
    ```
 
+3. Build an installable ZIP (avoids Kodi errors about missing `addon.xml`):
+   ```bash
+   python build_addon_zip.py
+   ```
+   The archive is written to the `build/` directory with the add-on files under a
+   `plugin.audio.koozer/` folder so Kodi can locate `addon.xml` during
+   installation.
+
 Keep Kodi-specific imports contained to the plugin entry modules so that tests can run without Kodi present. Follow PEP 8 and the Kodi Python style guidance for new code.
 
 ## Usage
