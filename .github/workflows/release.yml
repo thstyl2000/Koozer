@@ -18,12 +18,12 @@ jobs:
         id: metadata
         run: |
           python - <<'PY' > /tmp/addon_meta.sh
-            import xml.etree.ElementTree as ET
-            from pathlib import Path
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
 
-            root = ET.parse(Path('addon.xml')).getroot()
-            print(f"ADDON_ID={root.attrib['id']}")
-            print(f"ADDON_VERSION={root.attrib['version']}")
+          root = ET.parse(Path('addon.xml')).getroot()
+          print(f"ADDON_ID={root.attrib['id']}")
+          print(f"ADDON_VERSION={root.attrib['version']}")
           PY
 
           source /tmp/addon_meta.sh
