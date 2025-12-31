@@ -1,0 +1,14 @@
+<settings version="1">
+    <category label="32001">
+        <setting id="market"
+                 type="string"
+                 label="32010"
+                 default=""
+                 option="input"/>
+        <setting id="chart_limit"
+                 type="number"
+                 label="32011"
+                 default="25"
+                 range="5,50"/>
+    </category>
+</settings>
