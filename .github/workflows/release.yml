@@ -1,0 +1,68 @@
+name: Build and Release Add-on
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read add-on metadata
+        id: metadata
+        run: |
+          python - <<'PY' > /tmp/addon_meta.sh
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = ET.parse(Path('addon.xml')).getroot()
+          print(f"ADDON_ID={root.attrib['id']}")
+          print(f"ADDON_VERSION={root.attrib['version']}")
+          PY
+
+          source /tmp/addon_meta.sh
+
+          echo "Addon ID: $ADDON_ID"
+          echo "Addon Version: $ADDON_VERSION"
+
+          echo "id=$ADDON_ID" >> "$GITHUB_OUTPUT"
+          echo "version=$ADDON_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create distributable ZIP
+        run: |
+          ADDON_ID="${{ steps.metadata.outputs.id }}"
+          ADDON_VERSION="${{ steps.metadata.outputs.version }}"
+
+          mkdir -p build/${ADDON_ID}
+          rsync -a ./ build/${ADDON_ID}/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'build' \
+            --exclude 'tests' \
+            --exclude 'requirements-dev.txt' \
+            --exclude '*.md'
+
+          cd build
+          zip -r "${ADDON_ID}-${ADDON_VERSION}.zip" "${ADDON_ID}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}
+          path: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
+
+      - name: Publish release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
+          tag_name: ${{ github.ref_name }}
+          name: Koozer ${{ steps.metadata.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
