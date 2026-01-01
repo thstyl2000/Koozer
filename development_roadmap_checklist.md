@@ -134,3 +134,4 @@
 - [ ] No secrets appear in logs
 - [ ] Clear cache + logout/reset are reliable
 - [ ] All routes fail gracefully with user-friendly messaging
+- [ ] Kodi repository artwork complete and referenced (icon, fanart, required screenshots in `addon.xml`)
