@@ -195,9 +195,21 @@ jobs:
           name: ${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}
           path: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
 
-      - name: Build repository artifacts
+      - name: Build repository artifacts with Repository Tools
+        env:
+          ADDON_ID: ${{ steps.metadata.outputs.id }}
+          ADDON_VERSION: ${{ steps.version.outputs.build }}
         run: |
-          python tools/build_repository.py --version "${{ steps.version.outputs.base }}" --suffix "${{ steps.version.outputs.suffix }}"
+          python tools/create_repository.py --datadir build/repository "build/${ADDON_ID}-${ADDON_VERSION}.zip"
+
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          from tools.generate_repository_index import write_index_html
+
+          write_index_html(Path("build/repository"), os.environ["ADDON_ID"], os.environ["ADDON_VERSION"])
+          PY
 
       - name: Build repository add-on with Repository Tools
         env:
@@ -241,10 +253,7 @@ jobs:
             popd >/dev/null
           fi
 
-          wget https://raw.githubusercontent.com/chadparry/kodi-repository.chad.parry.org/master/tools/create_repository.py
-          chmod +x create_repository.py
-
-          python create_repository.py --datadir build/repository-addon "${BASE_ZIP}"
+          python tools/create_repository.py --datadir build/repository-addon "${BASE_ZIP}"
 
       - name: Package repository add-on
         run: |
