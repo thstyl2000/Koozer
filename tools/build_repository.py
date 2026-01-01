@@ -80,7 +80,7 @@ def write_index_html(addon_id: str, repo_version: str) -> Path:
     addon_zip = f"{addon_id}-{repo_version}.zip"
 
     index_path.write_text(
-        """
+        f"""
 <!doctype html>
 <html lang="en">
   <head>
@@ -88,9 +88,9 @@ def write_index_html(addon_id: str, repo_version: str) -> Path:
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Koozer Kodi Repository</title>
     <style>
-      body { font-family: sans-serif; margin: 2rem; line-height: 1.5; }
-      code { background: #f6f8fa; padding: 0.2rem 0.4rem; border-radius: 4px; }
-      ul { padding-left: 1.25rem; }
+      body {{ font-family: sans-serif; margin: 2rem; line-height: 1.5; }}
+      code {{ background: #f6f8fa; padding: 0.2rem 0.4rem; border-radius: 4px; }}
+      ul {{ padding-left: 1.25rem; }}
     </style>
   </head>
   <body>
