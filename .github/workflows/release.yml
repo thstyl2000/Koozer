@@ -40,6 +40,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Read add-on metadata
         id: metadata
         run: |
@@ -174,12 +179,16 @@ jobs:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           git fetch origin "$DEFAULT_BRANCH"
-          git checkout "$DEFAULT_BRANCH"
+          git worktree add /tmp/default-branch "$DEFAULT_BRANCH"
+
+          pushd /tmp/default-branch
 
           python tools/update_addon_version.py "$ADDON_VERSION"
 
           if git diff --quiet addon.xml; then
             echo "addon.xml already at version $ADDON_VERSION"
+            popd
+            git worktree remove /tmp/default-branch
             exit 0
           fi
 
@@ -188,6 +197,9 @@ jobs:
           git add addon.xml
           git commit -m "chore: update addon version to $ADDON_VERSION"
           git push origin "$DEFAULT_BRANCH"
+
+          popd
+          git worktree remove /tmp/default-branch
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
