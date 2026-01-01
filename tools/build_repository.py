@@ -75,6 +75,45 @@ def write_md5(source_file: Path) -> Path:
     return md5_path
 
 
+def write_index_html(addon_id: str, repo_version: str) -> Path:
+    index_path = REPO_ROOT / "index.html"
+    addon_zip = f"{addon_id}-{repo_version}.zip"
+
+    index_path.write_text(
+        """
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Koozer Kodi Repository</title>
+    <style>
+      body { font-family: sans-serif; margin: 2rem; line-height: 1.5; }
+      code { background: #f6f8fa; padding: 0.2rem 0.4rem; border-radius: 4px; }
+      ul { padding-left: 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Koozer Kodi Repository</h1>
+    <p>
+      Add <code>https://thstyl2000.github.io/Koozer/</code> as a file source in Kodi
+      to install the Koozer repository. Kodi will read <code>addons.xml</code> from
+      this location and download updates automatically.
+    </p>
+
+    <h2>Direct Downloads</h2>
+    <ul>
+      <li><a href="addons.xml">addons.xml</a> (<a href="addons.xml.md5">md5</a>)</li>
+      <li><a href="{addon_zip}">{addon_zip}</a></li>
+    </ul>
+  </body>
+</html>
+        """.strip()
+    )
+
+    return index_path
+
+
 def main() -> None:
     exclusions = [".git", ".github", "build", "tests", "requirements-dev.txt", "*.md"]
 
@@ -105,11 +144,13 @@ def main() -> None:
 
     addons_xml = build_addons_xml([staged_addon_xml])
     md5_file = write_md5(addons_xml)
+    index_html = write_index_html(addon_id, repo_version)
 
     print(f"Repository built at {REPO_ROOT}")
     print(f"Addon package: {addon_zip.relative_to(ROOT)}")
     print(f"addons.xml: {addons_xml.relative_to(ROOT)}")
     print(f"addons.xml.md5: {md5_file.relative_to(ROOT)}")
+    print(f"index.html: {index_html.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
