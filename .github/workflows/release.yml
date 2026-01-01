@@ -134,6 +134,12 @@ jobs:
           echo "Using tag: ${TAG_NAME}"
           echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
 
+      - name: Set addon.xml version for build
+        env:
+          ADDON_VERSION: ${{ steps.version.outputs.build }}
+        run: |
+          python tools/update_addon_version.py "$ADDON_VERSION"
+
       - name: Create distributable ZIP
         run: |
           ADDON_ID="${{ steps.metadata.outputs.id }}"
@@ -160,6 +166,28 @@ jobs:
       - name: Build repository artifacts
         run: |
           python tools/build_repository.py --version "${{ steps.version.outputs.base }}" --suffix "${{ steps.version.outputs.suffix }}"
+
+      - name: Update addon.xml release version
+        if: steps.version.outputs.tag != ''
+        env:
+          ADDON_VERSION: ${{ steps.version.outputs.base }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch origin "$DEFAULT_BRANCH"
+          git checkout "$DEFAULT_BRANCH"
+
+          python tools/update_addon_version.py "$ADDON_VERSION"
+
+          if git diff --quiet addon.xml; then
+            echo "addon.xml already at version $ADDON_VERSION"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add addon.xml
+          git commit -m "chore: update addon version to $ADDON_VERSION"
+          git push origin "$DEFAULT_BRANCH"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
