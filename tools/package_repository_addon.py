@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import io
 import shutil
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
@@ -131,6 +133,61 @@ def zip_directory(source_dir: Path, archive_path: Path) -> None:
             archive.write(path, path.relative_to(source_dir.parent))
 
 
+def prepare_addon_zip(addon_zip: Path, temp_dir: Path) -> tuple[Path, str]:
+    addon_xml_path, addon_version = get_addon_root_and_version(addon_zip)
+    base_version = normalize_version(addon_version)
+
+    if addon_version == base_version:
+        return addon_zip, addon_version
+
+    normalized_addon_zip = temp_dir / addon_zip.name
+    with zipfile.ZipFile(addon_zip, compression=zipfile.ZIP_DEFLATED) as source_zip:
+        with zipfile.ZipFile(
+            normalized_addon_zip, "w", compression=zipfile.ZIP_DEFLATED
+        ) as normalized_zip:
+            for info in source_zip.infolist():
+                contents = source_zip.read(info.filename)
+                if info.filename == addon_xml_path:
+                    contents = rewrite_addon_xml(contents, base_version)
+                normalized_zip.writestr(info, contents)
+
+    print(
+        "Normalized add-on version for repository packaging: "
+        f"{addon_version} -> {base_version}"
+    )
+
+    return normalized_addon_zip, base_version
+
+
+def get_addon_root_and_version(addon_zip: Path) -> tuple[str, str]:
+    with zipfile.ZipFile(addon_zip, compression=zipfile.ZIP_DEFLATED) as archive:
+        roots = {Path(name).parts[0] for name in archive.namelist() if name}
+        if len(roots) != 1:
+            raise RuntimeError(f"Archive should contain one directory: {addon_zip}")
+        root = roots.pop()
+
+        addon_xml_path = f"{root}/addon.xml"
+        with archive.open(addon_xml_path) as addon_xml_file:
+            addon_metadata = ET.parse(addon_xml_file).getroot()
+            version = addon_metadata.attrib.get("version")
+            if version is None:
+                raise RuntimeError(f"Missing add-on version in {addon_xml_path}")
+    return addon_xml_path, version
+
+
+def normalize_version(version: str) -> str:
+    return version.split(".dev", 1)[0]
+
+
+def rewrite_addon_xml(xml_bytes: bytes, version: str) -> bytes:
+    root = ET.fromstring(xml_bytes)
+    root.attrib["version"] = version
+    tree = ET.ElementTree(root)
+    buffer = io.BytesIO()
+    tree.write(buffer, encoding="UTF-8", xml_declaration=True)
+    return buffer.getvalue()
+
+
 
 def main() -> None:
     args = parse_args()
@@ -149,14 +206,19 @@ def main() -> None:
     addons_xml = repository_output / "addons.xml"
     addons_checksum = repository_output / "addons.xml.md5"
 
-    create_repository.create_repository(
-        [str(addon_zip)],
-        data_path=str(repository_output),
-        info_path=str(addons_xml),
-        checksum_path=str(addons_checksum),
-        is_compressed=False,
-        no_parallel=args.no_parallel,
-    )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        addon_zip_for_repository, _addon_version_for_repository = prepare_addon_zip(
+            addon_zip, Path(temp_dir)
+        )
+
+        create_repository.create_repository(
+            [str(addon_zip_for_repository)],
+            data_path=str(repository_output),
+            info_path=str(addons_xml),
+            checksum_path=str(addons_checksum),
+            is_compressed=False,
+            no_parallel=args.no_parallel,
+        )
 
     repository_source = Path(args.repository_source)
     if not repository_source.is_dir():
