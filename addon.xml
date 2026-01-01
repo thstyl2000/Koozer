@@ -6,8 +6,7 @@
   <extension point="xbmc.addon.metadata">
     <summary lang="en_GB">Browse Deezer charts and tracks from Kodi.</summary>
     <description lang="en_GB">A Kodi audio plugin for Deezer. Browse curated charts and play track previews where available. Configure your preferred market in settings to see the right charts.</description>
-    <news>v0.0.0
-- Early development build; not deployment ready yet.</news>
+    <news>- Early development build; not deployment ready yet.</news>
     <license>MIT</license>
     <platform>all</platform>
     <source>https://developers.deezer.com/api</source>
