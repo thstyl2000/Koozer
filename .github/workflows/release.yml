@@ -199,6 +199,22 @@ jobs:
         run: |
           python tools/build_repository.py --version "${{ steps.version.outputs.base }}" --suffix "${{ steps.version.outputs.suffix }}"
 
+      - name: Build repository add-on with Repository Tools
+        env:
+          ADDON_ID: ${{ steps.metadata.outputs.id }}
+          ADDON_VERSION: ${{ steps.version.outputs.build }}
+        run: |
+          wget https://raw.githubusercontent.com/chadparry/kodi-repository.chad.parry.org/master/tools/create_repository.py
+          chmod +x create_repository.py
+
+          python create_repository.py --datadir build/repository-addon "build/${ADDON_ID}-${ADDON_VERSION}.zip"
+
+      - name: Upload repository add-on artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-addon
+          path: build/repository-addon
+
       - name: Update addon.xml release version
         if: steps.version.outputs.tag != ''
         env:
