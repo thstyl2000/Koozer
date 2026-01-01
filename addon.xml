@@ -12,6 +12,10 @@
     <platform>all</platform>
     <source>https://developers.deezer.com/api</source>
     <language>en_GB</language>
+    <assets>
+      <icon>resources/media/icon.png</icon>
+      <fanart>resources/media/fanart.jpg</fanart>
+    </assets>
   </extension>
   <extension point="xbmc.python.pluginsource" library="default.py">
     <provides>audio</provides>
