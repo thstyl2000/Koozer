@@ -29,6 +29,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "addon_zip",
         help="Path to the add-on zip that should be published in the repository",
+        nargs="?",
+    )
+    parser.add_argument(
+        "--addon-zip",
+        dest="addon_zip_arg",
+        help="Path to the add-on zip that should be published in the repository",
     )
     parser.add_argument(
         "--addon-version",
@@ -129,7 +135,11 @@ def zip_directory(source_dir: Path, archive_path: Path) -> None:
 def main() -> None:
     args = parse_args()
 
-    addon_zip = Path(args.addon_zip)
+    addon_zip_arg = args.addon_zip_arg or args.addon_zip
+    if addon_zip_arg is None:
+        raise ValueError("An add-on ZIP must be provided via the positional argument or --addon-zip")
+
+    addon_zip = Path(addon_zip_arg)
     if not addon_zip.is_file():
         raise FileNotFoundError(f"Add-on ZIP not found: {addon_zip}")
 
