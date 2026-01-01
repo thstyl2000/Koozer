@@ -208,33 +208,33 @@ jobs:
 
           if [[ ! -f "$BASE_ZIP" ]]; then
             python - <<'PY'
-            import xml.etree.ElementTree as ET
-            from pathlib import Path
-            import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          import os
 
-            addon_id = os.environ["ADDON_ID"]
-            addon_version = os.environ["ADDON_BASE_VERSION"]
+          addon_id = os.environ["ADDON_ID"]
+          addon_version = os.environ["ADDON_BASE_VERSION"]
 
-            build_dir = Path("build") / addon_id
-            addon_xml = build_dir / "addon.xml"
+          build_dir = Path("build") / addon_id
+          addon_xml = build_dir / "addon.xml"
 
-            tree = ET.parse(addon_xml)
-            root = tree.getroot()
+          tree = ET.parse(addon_xml)
+          root = tree.getroot()
 
-            previous_version = root.attrib.get("version")
-            root.attrib["version"] = addon_version
+          previous_version = root.attrib.get("version")
+          root.attrib["version"] = addon_version
 
-            try:
-                ET.indent(tree)
-            except AttributeError:
-                pass
+          try:
+              ET.indent(tree)
+          except AttributeError:
+              pass
 
-            tree.write(addon_xml, encoding="UTF-8", xml_declaration=True)
+          tree.write(addon_xml, encoding="UTF-8", xml_declaration=True)
 
-            print(
-                f"Updated staged addon.xml version from {previous_version} to {addon_version}"
-            )
-            PY
+          print(
+              f"Updated staged addon.xml version from {previous_version} to {addon_version}"
+          )
+          PY
 
             pushd build >/dev/null
             zip -r "${ADDON_ID}-${ADDON_BASE_VERSION}.zip" "${ADDON_ID}"
