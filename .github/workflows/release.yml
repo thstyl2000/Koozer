@@ -31,8 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release:
-    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
+  release_and_publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -98,25 +97,6 @@ jobs:
           name: ${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}
           path: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
 
-      - name: Publish release asset
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
-          tag_name: ${{ steps.release_tag.outputs.tag }}
-          name: Koozer ${{ steps.metadata.outputs.version }}
-          overwrite: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish_repository:
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Build repository artifacts
         run: |
           python tools/build_repository.py
@@ -134,3 +114,14 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Publish release asset
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: Koozer ${{ steps.metadata.outputs.version }}
+          overwrite: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
