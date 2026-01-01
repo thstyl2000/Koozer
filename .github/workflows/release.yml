@@ -159,7 +159,11 @@ jobs:
           import xml.etree.ElementTree as ET
           from pathlib import Path
 
-          build_dir = Path('build') / '${ADDON_ID}'
+          import os
+
+          addon_id = os.environ["ADDON_ID"]
+
+          build_dir = Path("build") / addon_id
           addon_xml = build_dir / 'addon.xml'
 
           tree = ET.parse(addon_xml)
