@@ -10,7 +10,7 @@
 - Early development build; not deployment ready yet.</news>
     <license>MIT</license>
     <platform>all</platform>
-    <source>https://developers.deezer.com/api</source>
+    <source>https://github.com/thstyl2000/Koozer</source>
     <language>en_GB</language>
     <assets>
       <icon>resources/media/icon.png</icon>
