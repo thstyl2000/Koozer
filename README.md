@@ -1,7 +1,11 @@
 # Koozer
 > :warning: **Under Construction**: Nothing really works (yet...)
 
-Kodi Deezer Add-on built following [official Kodi development guidelines](https://kodi.wiki/view/Development:Main_Page). It uses the public [Deezer API](https://developers.deezer.com/api) for chart data.
+## Guidelines
+- [Official Kodi Add-on development guidelines](https://kodi.wiki/view/Add-on_development)
+- [Official Kodi Add-on repository guidelines](https://kodi.wiki/view/Add-on_repositories)
+- [Official Deezer development guidelines](https://developers.deezer.com/guidelines)
+- [Deezer API](https://developers.deezer.com/api)
 
 ## Features
 - Browse Deezer public charts and list popular tracks.
