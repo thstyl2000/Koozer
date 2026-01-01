@@ -290,7 +290,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
+          files: |
+            build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
+            build/repository-addon/*.zip
           tag_name: ${{ steps.release_tag.outputs.tag }}
           name: Koozer ${{ steps.version.outputs.base }}
           overwrite_files: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
