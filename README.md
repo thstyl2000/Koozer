@@ -43,9 +43,10 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
 - Enable GitHub Pages for the repository (using the `gh-pages` branch created by the workflow) and point Kodi to the published URL to receive updates.
 
 ## Usage
-- Install the add-on via the GitHub-hosted repository (auto-updates):
-  1. In Kodi, add a new file source that points to `https://thstyl2000.github.io/Koozer/`.
-  2. Install the repository ZIP from that source; Kodi will pick up future updates automatically whenever commits land on `main`.
+- Install the repository add-on for automatic updates:
+  1. Download the latest `repository.*.zip` from the GitHub Releases page (or from the workflow artifacts if you are testing a nightly run).
+  2. In Kodi, go to **Add-ons > Install from zip file** and select the downloaded repository ZIP.
+  3. Once installed, open **Add-ons > Install from repository > Koozer Repository > Music add-ons > Koozer** to install the add-on itself; future updates will be delivered automatically through the repository.
 - Install manually as a ZIP from the Kodi add-on browser if you prefer a one-off install.
 - Configure the preferred country code and chart size from the add-on settings dialog.
 - Browse charts from the home directory entry and play available preview URLs where offered by the Deezer API.
