@@ -27,7 +27,15 @@ Kodi Deezer Add-on built following [official Kodi development guidelines](https:
 
 Keep Kodi-specific imports contained to the plugin entry modules so that tests can run without Kodi present. Follow PEP 8 and the Kodi Python style guidance for new code.
 
+### Repository publishing
+- A GitHub Actions workflow builds repository artifacts from `main` on every push and deploys them to GitHub Pages.
+- Nightly builds append a `.dev<run_number>` suffix to the add-on version so Kodi can see new updates automatically.
+- Enable GitHub Pages for the repository (using the `gh-pages` branch created by the workflow) and point Kodi to the published URL to receive updates.
+
 ## Usage
-- Install the add-on as a ZIP from the Kodi add-on browser.
+- Install the add-on via the GitHub-hosted repository (auto-updates):
+  1. In Kodi, add a new file source that points to `https://<your-github-username>.github.io/Koozer/`.
+  2. Install the repository ZIP from that source; Kodi will pick up future updates automatically whenever commits land on `main`.
+- Install manually as a ZIP from the Kodi add-on browser if you prefer a one-off install.
 - Configure the preferred country code and chart size from the add-on settings dialog.
 - Browse charts from the home directory entry and play available preview URLs where offered by the Deezer API.
