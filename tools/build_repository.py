@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import os
 import shutil
@@ -17,10 +18,11 @@ def load_addon_metadata(addon_xml: Path) -> ET.Element:
     return tree.getroot()
 
 
-def apply_version_override(addon_root: ET.Element, suffix: str | None) -> str:
-    base_version = addon_root.attrib["version"]
-    if suffix:
-        addon_root.attrib["version"] = f"{base_version}{suffix}"
+def apply_version_override(
+    addon_root: ET.Element, override_version: str | None, suffix: str | None
+) -> str:
+    base_version = override_version or addon_root.attrib["version"]
+    addon_root.attrib["version"] = f"{base_version}{suffix or ''}"
     return addon_root.attrib["version"]
 
 
@@ -76,9 +78,21 @@ def write_md5(source_file: Path) -> Path:
 def main() -> None:
     exclusions = [".git", ".github", "build", "tests", "requirements-dev.txt", "*.md"]
 
+    parser = argparse.ArgumentParser(description="Build Kodi repository artifacts")
+    parser.add_argument("--version", help="Version to write into staged addon.xml")
+    parser.add_argument(
+        "--suffix",
+        help=(
+            "Optional suffix appended to the version (defaults to NIGHTLY_VERSION_SUFFIX"
+            " env value)"
+        ),
+    )
+    args = parser.parse_args()
+
     addon_root = load_addon_metadata(ADDON_XML)
     addon_id = addon_root.attrib["id"]
-    repo_version = apply_version_override(addon_root, os.getenv("NIGHTLY_VERSION_SUFFIX"))
+    suffix = args.suffix if args.suffix is not None else os.getenv("NIGHTLY_VERSION_SUFFIX")
+    repo_version = apply_version_override(addon_root, args.version, suffix)
 
     staging_dir = REPO_ROOT / addon_id
     if staging_dir.exists():
