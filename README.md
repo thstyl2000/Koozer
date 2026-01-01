@@ -5,6 +5,7 @@
 - [Official Kodi Add-on development guidelines](https://kodi.wiki/view/Add-on_development)
 - [Official Kodi Add-on repository guidelines](https://kodi.wiki/view/Add-on_repositories)
 - [Official Kodi Add-on repository rules](https://kodi.wiki/view/Add-on_rules)
+- [Official Kodi Add-on repository structure](https://kodi.wiki/view/Add-on_structure)
 - [Official Deezer development guidelines](https://developers.deezer.com/guidelines)
 - [Deezer API](https://developers.deezer.com/api)
 
