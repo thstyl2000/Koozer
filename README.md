@@ -34,7 +34,7 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
 
 ## Usage
 - Install the add-on via the GitHub-hosted repository (auto-updates):
-  1. In Kodi, add a new file source that points to `https://<your-github-username>.github.io/Koozer/`.
+  1. In Kodi, add a new file source that points to `https://thstyl2000.github.io/Koozer/`.
   2. Install the repository ZIP from that source; Kodi will pick up future updates automatically whenever commits land on `main`.
 - Install manually as a ZIP from the Kodi add-on browser if you prefer a one-off install.
 - Configure the preferred country code and chart size from the add-on settings dialog.
