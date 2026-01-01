@@ -180,6 +180,6 @@ jobs:
           files: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
           tag_name: ${{ steps.release_tag.outputs.tag }}
           name: Koozer ${{ steps.version.outputs.base }}
-          overwrite: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
+          overwrite_files: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
