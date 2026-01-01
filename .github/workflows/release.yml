@@ -134,6 +134,13 @@ jobs:
           echo "Using tag: ${TAG_NAME}"
           echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
 
+      - name: Set addon.xml version for release build
+        if: steps.version.outputs.tag != ''
+        env:
+          ADDON_VERSION: ${{ steps.version.outputs.base }}
+        run: |
+          python tools/update_addon_version.py "$ADDON_VERSION"
+
       - name: Create distributable ZIP
         run: |
           ADDON_ID="${{ steps.metadata.outputs.id }}"
