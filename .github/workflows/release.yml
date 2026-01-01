@@ -155,6 +155,29 @@ jobs:
             --exclude 'requirements-dev.txt' \
             --exclude '*.md'
 
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          build_dir = Path('build') / '${ADDON_ID}'
+          addon_xml = build_dir / 'addon.xml'
+
+          tree = ET.parse(addon_xml)
+          root = tree.getroot()
+
+          previous_version = root.attrib.get('version')
+          root.attrib['version'] = '${ADDON_VERSION}'
+
+          try:
+              ET.indent(tree)
+          except AttributeError:
+              pass
+
+          tree.write(addon_xml, encoding='UTF-8', xml_declaration=True)
+
+          print(f"Updated staged addon.xml version from {previous_version} to ${ADDON_VERSION}")
+          PY
+
           cd build
           zip -r "${ADDON_ID}-${ADDON_VERSION}.zip" "${ADDON_ID}"
 
