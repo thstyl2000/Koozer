@@ -45,9 +45,7 @@ def write_addon_xml(dest_dir: Path, addon_root: ET.Element) -> Path:
 def create_zip(addon_dir: Path, addon_id: str, addon_version: str) -> Path:
     zip_name = f"{addon_id}-{addon_version}.zip"
     zip_path = addon_dir.parent / zip_name
-    shutil.make_archive(
-        zip_path.with_suffix(""), "zip", root_dir=addon_dir.parent, base_dir=addon_dir.name
-    )
+    shutil.make_archive(zip_path.with_suffix(""), "zip", addon_dir)
     return zip_path
 
 
