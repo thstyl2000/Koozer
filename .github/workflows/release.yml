@@ -49,13 +49,16 @@ jobs:
 
           root = ET.parse(Path('addon.xml')).getroot()
           print(f"ADDON_ID={root.attrib['id']}")
+          print(f"ADDON_VERSION={root.attrib['version']}")
           PY
 
           source /tmp/addon_meta.sh
 
           echo "Addon ID: $ADDON_ID"
+          echo "Addon version: $ADDON_VERSION"
 
           echo "id=$ADDON_ID" >> "$GITHUB_OUTPUT"
+          echo "version=$ADDON_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Determine build version
         id: version
@@ -65,7 +68,7 @@ jobs:
           if [[ -n "$RAW_TAG" ]]; then
             BASE_VERSION="${RAW_TAG#v}"
           else
-            BASE_VERSION="0.0.0"
+            BASE_VERSION="${{ steps.metadata.outputs.version }}"
           fi
 
           RELEASE_TAG=""
