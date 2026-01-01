@@ -1,4 +1,5 @@
 # Koozer
+> :warning: **Under Construction**: Nothing really works (yet...)
 
 Kodi Deezer Add-on built following [official Kodi development guidelines](https://kodi.wiki/view/Development:Main_Page). It uses the public [Deezer API](https://developers.deezer.com/api) for chart data.
 
