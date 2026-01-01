@@ -37,6 +37,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read add-on metadata
         id: metadata
@@ -47,29 +49,87 @@ jobs:
 
           root = ET.parse(Path('addon.xml')).getroot()
           print(f"ADDON_ID={root.attrib['id']}")
-          print(f"ADDON_VERSION={root.attrib['version']}")
           PY
 
           source /tmp/addon_meta.sh
 
           echo "Addon ID: $ADDON_ID"
-          echo "Addon Version: $ADDON_VERSION"
 
           echo "id=$ADDON_ID" >> "$GITHUB_OUTPUT"
-          echo "version=$ADDON_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Determine build version
+        id: version
+        run: |
+          RAW_TAG=$(git describe --tags --match "v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null || true)
+
+          if [[ -n "$RAW_TAG" ]]; then
+            BASE_VERSION="${RAW_TAG#v}"
+          else
+            BASE_VERSION="0.0.0"
+          fi
+
+          RELEASE_TAG=""
+          REF="${GITHUB_REF:-}"
+
+          if [[ "$REF" == refs/tags/* ]]; then
+            RELEASE_TAG="${REF#refs/tags/}"
+            BASE_VERSION="${RELEASE_TAG#v}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.publish_release }}" == "yes" ]]; then
+            if [[ -n "${{ inputs.release_tag }}" ]]; then
+              RELEASE_TAG="${{ inputs.release_tag }}"
+              BASE_VERSION="${RELEASE_TAG#v}"
+            elif [[ -n "$RAW_TAG" ]]; then
+              RELEASE_TAG="$RAW_TAG"
+              BASE_VERSION="${RELEASE_TAG#v}"
+            else
+              RELEASE_TAG="v${BASE_VERSION}"
+            fi
+          fi
+
+          SUFFIX=""
+          if [[ -z "$RELEASE_TAG" ]]; then
+            SUFFIX=".dev${{ github.run_number }}"
+          fi
+
+          BUILD_VERSION="${BASE_VERSION}${SUFFIX}"
+
+          echo "Base version: $BASE_VERSION"
+          echo "Version suffix: ${SUFFIX:-<none>}"
+          echo "Build version: $BUILD_VERSION"
+
+          if [[ -n "$RELEASE_TAG" ]]; then
+            echo "Release tag: $RELEASE_TAG"
+            echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "base=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Preflight release checks
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
+        run: |
+          TAG_NAME="${{ steps.version.outputs.tag }}"
+          if [[ -z "$TAG_NAME" ]]; then
+            echo "No release tag provided for publishing"
+            exit 1
+          fi
+
+          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must follow vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Working tree is dirty; aborting release"
+            git status --short
+            exit 1
+          fi
 
       - name: Determine release tag
         id: release_tag
         run: |
-          TAG_NAME="${{ github.ref_name }}"
-
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.publish_release }}" == "yes" ]]; then
-            if [[ -n "${{ inputs.release_tag }}" ]]; then
-              TAG_NAME="${{ inputs.release_tag }}"
-            else
-              TAG_NAME="v${{ steps.metadata.outputs.version }}"
-            fi
-          fi
+          TAG_NAME="${{ steps.version.outputs.tag || github.ref_name }}"
 
           echo "Using tag: ${TAG_NAME}"
           echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
@@ -77,7 +137,7 @@ jobs:
       - name: Create distributable ZIP
         run: |
           ADDON_ID="${{ steps.metadata.outputs.id }}"
-          ADDON_VERSION="${{ steps.metadata.outputs.version }}"
+          ADDON_VERSION="${{ steps.version.outputs.build }}"
 
           mkdir -p build/${ADDON_ID}
           rsync -a ./ build/${ADDON_ID}/ \
@@ -94,14 +154,12 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}
-          path: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
+          name: ${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}
+          path: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
 
       - name: Build repository artifacts
         run: |
-          python tools/build_repository.py
-        env:
-          NIGHTLY_VERSION_SUFFIX: .dev${{ github.run_number }}
+          python tools/build_repository.py --version "${{ steps.version.outputs.base }}" --suffix "${{ steps.version.outputs.suffix }}"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -119,9 +177,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/${{ steps.metadata.outputs.id }}-${{ steps.metadata.outputs.version }}.zip
+          files: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
           tag_name: ${{ steps.release_tag.outputs.tag }}
-          name: Koozer ${{ steps.metadata.outputs.version }}
+          name: Koozer ${{ steps.version.outputs.base }}
           overwrite: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
