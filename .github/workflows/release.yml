@@ -246,6 +246,11 @@ jobs:
 
           python create_repository.py --datadir build/repository-addon "${BASE_ZIP}"
 
+      - name: Package repository add-on
+        run: |
+          cd build/repository-addon
+          zip -r repository-addon.zip .
+
       - name: Upload repository add-on artifact
         uses: actions/upload-artifact@v4
         with:
