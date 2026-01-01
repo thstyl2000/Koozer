@@ -142,10 +142,10 @@ jobs:
           python tools/update_addon_version.py "$ADDON_VERSION"
 
       - name: Create distributable ZIP
+        env:
+          ADDON_ID: ${{ steps.metadata.outputs.id }}
+          ADDON_VERSION: ${{ steps.version.outputs.build }}
         run: |
-          ADDON_ID="${{ steps.metadata.outputs.id }}"
-          ADDON_VERSION="${{ steps.version.outputs.build }}"
-
           mkdir -p build/${ADDON_ID}
           rsync -a ./ build/${ADDON_ID}/ \
             --exclude '.git' \
@@ -162,6 +162,7 @@ jobs:
           import os
 
           addon_id = os.environ["ADDON_ID"]
+          addon_version = os.environ["ADDON_VERSION"]
 
           build_dir = Path("build") / addon_id
           addon_xml = build_dir / 'addon.xml'
@@ -170,7 +171,7 @@ jobs:
           root = tree.getroot()
 
           previous_version = root.attrib.get('version')
-          root.attrib['version'] = '${ADDON_VERSION}'
+          root.attrib['version'] = addon_version
 
           try:
               ET.indent(tree)
@@ -179,7 +180,7 @@ jobs:
 
           tree.write(addon_xml, encoding='UTF-8', xml_declaration=True)
 
-          print(f"Updated staged addon.xml version from {previous_version} to ${ADDON_VERSION}")
+          print(f"Updated staged addon.xml version from {previous_version} to {addon_version}")
           PY
 
           cd build
