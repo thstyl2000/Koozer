@@ -195,67 +195,22 @@ jobs:
           name: ${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}
           path: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
 
-      - name: Build repository artifacts with Repository Tools
+      - name: Build repository artifacts and add-on with Repository Tools
         env:
           ADDON_ID: ${{ steps.metadata.outputs.id }}
           ADDON_VERSION: ${{ steps.version.outputs.build }}
         run: |
-          python tools/create_repository.py --datadir build/repository "build/${ADDON_ID}-${ADDON_VERSION}.zip"
-
-      - name: Build repository add-on with Repository Tools
-        env:
-          ADDON_ID: ${{ steps.metadata.outputs.id }}
-          ADDON_BASE_VERSION: ${{ steps.version.outputs.base }}
-        run: |
-          BASE_ZIP="build/${ADDON_ID}-${ADDON_BASE_VERSION}.zip"
-
-          if [[ ! -f "$BASE_ZIP" ]]; then
-            python - <<'PY'
-          import xml.etree.ElementTree as ET
-          from pathlib import Path
-          import os
-
-          addon_id = os.environ["ADDON_ID"]
-          addon_version = os.environ["ADDON_BASE_VERSION"]
-
-          build_dir = Path("build") / addon_id
-          addon_xml = build_dir / "addon.xml"
-
-          tree = ET.parse(addon_xml)
-          root = tree.getroot()
-
-          previous_version = root.attrib.get("version")
-          root.attrib["version"] = addon_version
-
-          try:
-              ET.indent(tree)
-          except AttributeError:
-              pass
-
-          tree.write(addon_xml, encoding="UTF-8", xml_declaration=True)
-
-          print(
-              f"Updated staged addon.xml version from {previous_version} to {addon_version}"
-          )
-          PY
-
-            pushd build >/dev/null
-            zip -r "${ADDON_ID}-${ADDON_BASE_VERSION}.zip" "${ADDON_ID}"
-            popd >/dev/null
-          fi
-
-          python tools/create_repository.py --datadir build/repository-addon "${BASE_ZIP}"
-
-      - name: Package repository add-on
-        run: |
-          cd build/repository-addon
-          zip -r repository-addon.zip .
+          python tools/package_repository_addon.py \
+            --addon-zip "build/${ADDON_ID}-${ADDON_VERSION}.zip" \
+            --addon-version "${ADDON_VERSION}" \
+            --output build/repository-addon \
+            --repository-output build/repository
 
       - name: Upload repository add-on artifact
         uses: actions/upload-artifact@v4
         with:
           name: repository-addon
-          path: build/repository-addon
+          path: build/repository-addon/*.zip
 
       - name: Update addon.xml release version
         if: steps.version.outputs.tag != ''

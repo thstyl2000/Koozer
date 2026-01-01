@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<addon id="repository.koozer" version="0.0.0" name="Koozer Repository" provider-name="Koozer Team">
+  <requires>
+    <import addon="xbmc.addon" version="20.0.0" />
+  </requires>
+  <extension point="xbmc.addon.repository" name="Koozer Repository">
+    <dir>
+      <info>https://thstyl2000.github.io/Koozer/addons.xml</info>
+      <checksum>https://thstyl2000.github.io/Koozer/addons.xml.md5</checksum>
+      <datadir>https://thstyl2000.github.io/Koozer/</datadir>
+    </dir>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Kodi repository for the Koozer music add-on.</summary>
+    <description lang="en_GB">Install this repository to receive automatic updates for the Koozer music add-on directly from GitHub Pages.</description>
+    <platform>all</platform>
+    <license>MIT</license>
+    <language>en_GB</language>
+    <source>https://github.com/thstyl2000/Koozer</source>
+    <assets>
+      <icon>resources/media/icon.png</icon>
+      <fanart>resources/media/fanart.jpg</fanart>
+    </assets>
+  </extension>
+</addon>
