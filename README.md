@@ -44,7 +44,7 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
 
 ## Usage
 - Install the repository add-on for automatic updates:
-  1. Download the latest `repository.*.zip` from the GitHub Releases page (or from the workflow artifacts if you are testing a nightly run).
+  1. Download the latest `repository-addon.zip` from the GitHub Releases page (or from the workflow artifacts if you are testing a nightly run).
   2. In Kodi, go to **Add-ons > Install from zip file** and select the downloaded repository ZIP.
   3. Once installed, open **Add-ons > Install from repository > Koozer Repository > Music add-ons > Koozer** to install the add-on itself; future updates will be delivered automatically through the repository.
 - Install manually as a ZIP from the Kodi add-on browser if you prefer a one-off install.
