@@ -29,11 +29,11 @@ Kodi Deezer Add-on built following [official Kodi development guidelines](https:
 Keep Kodi-specific imports contained to the plugin entry modules so that tests can run without Kodi present. Follow PEP 8 and the Kodi Python style guidance for new code.
 
 ### Repository publishing
-- A GitHub Actions workflow builds repository artifacts from `main` on every push and deploys them to GitHub Pages.
-- Nightly builds append a `.dev<run_number>` suffix to the add-on version so Kodi can see new updates automatically.
+- A GitHub Actions workflow builds repository artifacts and deploys them to GitHub Pages.
+- Nightly builds run on every push to `main` and append a `.dev<run_number>` suffix to the add-on version so Kodi can detect updates between releases automatically.
+- Tagged release runs are triggered only from tags that strictly follow the `vMAJOR.MINOR.PATCH` pattern; these runs publish artifacts using the exact tag version without a `.dev` suffix.
+- Both nightly and release runs expect a clean working tree before publishing. Create and push a properly formatted tag to bump the version for a release instead of editing `addon.xml`; the workflow will inject the tag-derived version (or `0.0.0` if none exist) into the packaged artifacts automatically.
 - Enable GitHub Pages for the repository (using the `gh-pages` branch created by the workflow) and point Kodi to the published URL to receive updates.
-- Add-on versions are sourced from Git tags that follow the `vMAJOR.MINOR.PATCH` pattern. Create a tag to bump the version for a release instead of editing `addon.xml`; the workflow will inject the tag-derived version (or `0.0.0` if none exist) into the packaged artifacts automatically.
-- Release publishing is gated by a preflight check that requires a clean working tree and a properly formatted release tag, so ensure commits are pushed and tagged before triggering a release run.
 
 ## Usage
 - Install the add-on via the GitHub-hosted repository (auto-updates):
