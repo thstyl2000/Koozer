@@ -38,7 +38,8 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
 - A GitHub Actions workflow builds repository artifacts and deploys them to GitHub Pages.
 - Nightly builds run on every push to `main` and append a `.dev<run_number>` suffix to the add-on version so Kodi can detect updates between releases automatically.
 - Tagged release runs are triggered only from tags that strictly follow the `vMAJOR.MINOR.PATCH` pattern; these runs publish artifacts using the exact tag version without a `.dev` suffix.
-- Both nightly and release runs expect a clean working tree before publishing. Create and push a properly formatted tag to bump the version for a release instead of editing `addon.xml`; the workflow will inject the tag-derived version (or `0.0.0` if none exist) into the packaged artifacts automatically.
+- Both nightly and release runs expect a clean working tree before publishing. Create and push a properly formatted tag to bump the version for a release instead of editing `addon.xml`; the workflow will inject the tag-derived version (or the version from `addon.xml` if none exist) into the packaged artifacts automatically.
+- Before tagging a release, update `addon.xml`'s `<news>` entry and the root-level `changelog.txt` with the same versioned notes to keep release metadata in sync.
 - Enable GitHub Pages for the repository (using the `gh-pages` branch created by the workflow) and point Kodi to the published URL to receive updates.
 
 ## Usage
