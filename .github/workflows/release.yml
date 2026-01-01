@@ -202,15 +202,6 @@ jobs:
         run: |
           python tools/create_repository.py --datadir build/repository "build/${ADDON_ID}-${ADDON_VERSION}.zip"
 
-          python - <<'PY'
-          from pathlib import Path
-          import os
-
-          from tools.generate_repository_index import write_index_html
-
-          write_index_html(Path("build/repository"), os.environ["ADDON_ID"], os.environ["ADDON_VERSION"])
-          PY
-
       - name: Build repository add-on with Repository Tools
         env:
           ADDON_ID: ${{ steps.metadata.outputs.id }}
