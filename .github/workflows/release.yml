@@ -209,8 +209,8 @@ jobs:
       - name: Upload repository add-on artifact
         uses: actions/upload-artifact@v4
         with:
-          name: repository-addon
-          path: build/repository-addon/*.zip
+          name: repository.koozer-${{ steps.version.outputs.build }}.zip
+          path: build/repository-addon/repository.koozer-${{ steps.version.outputs.build }}.zip
 
       - name: Update addon.xml release version
         if: steps.version.outputs.tag != ''
