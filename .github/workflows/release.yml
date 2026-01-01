@@ -234,7 +234,7 @@ jobs:
             print(
                 f"Updated staged addon.xml version from {previous_version} to {addon_version}"
             )
-            PY
+          PY
 
             pushd build >/dev/null
             zip -r "${ADDON_ID}-${ADDON_BASE_VERSION}.zip" "${ADDON_ID}"
