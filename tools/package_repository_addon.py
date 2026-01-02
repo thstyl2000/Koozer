@@ -78,6 +78,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def update_addon_xml_version(addon_xml_path: Path, version: str) -> str:
+    if not version or not str(version).strip():
+        raise ValueError("Repository add-on version cannot be empty")
+
+    version = str(version).strip()
+
     tree = ET.parse(addon_xml_path)
     root = tree.getroot()
     previous_version = root.attrib.get("version", "<unset>")
@@ -231,6 +236,13 @@ def main() -> None:
     if addon_version is None:
         addon_metadata = ET.parse(repository_source / "addon.xml").getroot()
         addon_version = addon_metadata.attrib.get("version")
+
+    if not addon_version or not str(addon_version).strip():
+        raise ValueError(
+            "Repository add-on version is missing; provide --addon-version or set a version in addon.xml"
+        )
+
+    addon_version = str(addon_version).strip()
 
     staged_addon_dir = stage_repository_addon(
         repository_source,
