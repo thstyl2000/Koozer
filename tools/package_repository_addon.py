@@ -116,11 +116,9 @@ def stage_repository_addon(
         f"to {addon_version} in {staged_addon_dir / 'addon.xml'}"
     )
 
-    media_dir = staged_addon_dir / "resources" / "media"
-    media_dir.mkdir(parents=True, exist_ok=True)
     for asset_name in ASSET_FILENAMES:
         asset_source = assets_source / asset_name
-        asset_target = media_dir / asset_name
+        asset_target = staged_addon_dir / asset_name
         if not asset_source.is_file():
             raise FileNotFoundError(f"Missing asset: {asset_source}")
         shutil.copy2(asset_source, asset_target)
