@@ -18,8 +18,8 @@
     <language>en_GB</language>
     <source>https://github.com/thstyl2000/Koozer</source>
     <assets>
-      <icon>resources/media/icon.png</icon>
-      <fanart>resources/media/fanart.jpg</fanart>
+      <icon>icon.png</icon>
+      <fanart>fanart.jpg</fanart>
     </assets>
   </extension>
 </addon>

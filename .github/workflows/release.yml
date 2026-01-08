@@ -158,6 +158,9 @@ jobs:
             --exclude 'requirements-dev.txt' \
             --exclude '*.md'
 
+          cp resources/media/icon.png "build/${ADDON_ID}/icon.png"
+          cp resources/media/fanart.jpg "build/${ADDON_ID}/fanart.jpg"
+
           python - <<'PY'
           import xml.etree.ElementTree as ET
           from pathlib import Path
