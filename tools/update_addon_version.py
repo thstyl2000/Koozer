@@ -5,24 +5,30 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ADDON_XML = ROOT / "addon.xml"
+ADDON_XML = [
+    ROOT / "addon.xml",
+    ROOT / "repository.koozer" / "addon.xml",
+]
 
 
 def update_addon_version(version: str) -> None:
-    tree = ET.parse(ADDON_XML)
-    root = tree.getroot()
+    updates: list[str] = []
+    for path in ADDON_XML:
+        tree = ET.parse(path)
+        root = tree.getroot()
 
-    previous_version = root.attrib.get("version")
-    root.attrib["version"] = version
+        previous_version = root.attrib.get("version")
+        root.attrib["version"] = version
 
-    try:
-        ET.indent(tree)  # Python 3.9+
-    except AttributeError:
-        pass
+        try:
+            ET.indent(tree)  # Python 3.9+
+        except AttributeError:
+            pass
 
-    tree.write(ADDON_XML, encoding="UTF-8", xml_declaration=True)
+        tree.write(path, encoding="UTF-8", xml_declaration=True)
+        updates.append(f"{path} {previous_version} -> {version}")
 
-    print(f"Updated addon.xml version from {previous_version} to {version}")
+    print("Updated addon.xml versions: " + ", ".join(updates))
 
 
 def main() -> None:
