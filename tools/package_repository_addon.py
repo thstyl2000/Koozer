@@ -19,6 +19,7 @@ import create_repository  # pylint: disable=wrong-import-position
 
 
 ASSET_FILENAMES = ("icon.png", "fanart.jpg")
+ASSET_TAGS = ("icon", "fanart")
 
 
 def parse_args() -> argparse.Namespace:
@@ -180,6 +181,54 @@ def get_addon_root_and_version(addon_zip: Path) -> tuple[str, str]:
     return addon_xml_path, version
 
 
+def parse_addon_manifest(addon_zip: Path) -> tuple[str, str, dict[str, str]]:
+    with zipfile.ZipFile(addon_zip, compression=zipfile.ZIP_DEFLATED) as archive:
+        roots = {Path(name).parts[0] for name in archive.namelist() if name}
+        if len(roots) != 1:
+            raise RuntimeError(f"Archive should contain one directory: {addon_zip}")
+        root_dir = roots.pop()
+
+        addon_xml_path = f"{root_dir}/addon.xml"
+        with archive.open(addon_xml_path) as addon_xml_file:
+            addon_metadata = ET.parse(addon_xml_file).getroot()
+        addon_id = addon_metadata.attrib.get("id")
+        if not addon_id:
+            raise RuntimeError(f"Missing add-on ID in {addon_xml_path}")
+
+        assets: dict[str, str] = {}
+        assets_root = addon_metadata.find(".//assets")
+        if assets_root is not None:
+            for tag in ASSET_TAGS:
+                asset_value = assets_root.findtext(tag)
+                if asset_value:
+                    assets[tag] = asset_value
+
+    return root_dir, addon_id, assets
+
+
+def extract_addon_assets(addon_zip: Path, repository_output: Path) -> None:
+    addon_root, addon_id, assets = parse_addon_manifest(addon_zip)
+    if not assets:
+        return
+
+    addon_target_dir = repository_output / addon_id
+    if not addon_target_dir.is_dir():
+        raise FileNotFoundError(f"Repository add-on directory not found: {addon_target_dir}")
+
+    with zipfile.ZipFile(addon_zip, compression=zipfile.ZIP_DEFLATED) as archive:
+        for asset_path in assets.values():
+            zip_asset_path = f"{addon_root}/{asset_path}"
+            try:
+                source_file = archive.open(zip_asset_path)
+            except KeyError as exc:
+                raise FileNotFoundError(
+                    f"Missing asset {zip_asset_path} in {addon_zip}"
+                ) from exc
+            target_path = addon_target_dir / Path(asset_path).name
+            with source_file, target_path.open("wb") as target_file:
+                shutil.copyfileobj(source_file, target_file)
+
+
 def normalize_version(version: str) -> str:
     return version.split(".dev", 1)[0]
 
@@ -224,6 +273,7 @@ def main() -> None:
             is_compressed=False,
             no_parallel=args.no_parallel,
         )
+        extract_addon_assets(addon_zip_for_repository, repository_output)
 
     repository_source = Path(args.repository_source)
     if not repository_source.is_dir():

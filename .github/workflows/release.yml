@@ -234,6 +234,16 @@ jobs:
           git commit -m "chore: update addon version to $ADDON_VERSION"
           git push origin "$DEFAULT_BRANCH"
 
+      - name: Verify repository output
+        env:
+          ADDON_ID: ${{ steps.metadata.outputs.id }}
+        run: |
+          ls -al build/repository
+          test -f build/repository/addons.xml
+          test -f build/repository/addons.xml.md5
+          test -d "build/repository/${ADDON_ID}"
+          ls -al "build/repository/${ADDON_ID}"
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
