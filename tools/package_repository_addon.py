@@ -134,7 +134,10 @@ def stage_repository_addon(
 def zip_directory(source_dir: Path, archive_path: Path) -> None:
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in source_dir.rglob("*"):
-            archive.write(path, Path(source_dir.name) / path.relative_to(source_dir))
+            if path.is_dir():
+                continue
+            arcname = (Path(source_dir.name) / path.relative_to(source_dir)).as_posix()
+            archive.write(path, arcname)
 
 
 def prepare_addon_zip(addon_zip: Path, temp_dir: Path) -> tuple[Path, str]:
@@ -240,6 +243,21 @@ def rewrite_addon_xml(xml_bytes: bytes, version: str) -> bytes:
     return buffer.getvalue()
 
 
+def validate_repository_addon_manifest(addon_dir: Path) -> None:
+    addon_xml_path = addon_dir / "addon.xml"
+    if not addon_xml_path.is_file():
+        raise FileNotFoundError(f"Repository add-on addon.xml not found: {addon_xml_path}")
+
+    try:
+        addon_root = ET.parse(addon_xml_path).getroot()
+    except ET.ParseError as exc:
+        raise ValueError(f"Repository add-on addon.xml is invalid XML: {addon_xml_path}") from exc
+
+    addon_id = addon_root.attrib.get("id")
+    if not addon_id:
+        raise ValueError(f"Repository add-on ID is missing in {addon_xml_path}")
+
+
 
 def main() -> None:
     args = parse_args()
@@ -299,6 +317,7 @@ def main() -> None:
         Path(args.assets_source),
         repository_output,
     )
+    validate_repository_addon_manifest(staged_addon_dir)
 
     archive_path = repository_output_root / f"{staged_addon_dir.name}-{addon_version}.zip"
     if archive_path.exists():
