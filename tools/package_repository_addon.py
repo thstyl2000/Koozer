@@ -134,7 +134,7 @@ def stage_repository_addon(
 def zip_directory(source_dir: Path, archive_path: Path) -> None:
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in source_dir.rglob("*"):
-            archive.write(path, path.relative_to(source_dir.parent))
+            archive.write(path, Path(source_dir.name) / path.relative_to(source_dir))
 
 
 def prepare_addon_zip(addon_zip: Path, temp_dir: Path) -> tuple[Path, str]:
