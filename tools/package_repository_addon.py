@@ -66,9 +66,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--assets-source",
-        default=Path("resources/media"),
+        default=Path("."),
         type=Path,
-        help="Directory containing the shared icon and fanart assets",
+        help="Directory containing the shared icon and fanart assets (defaults to addon root)",
     )
     parser.add_argument(
         "--no-parallel",
