@@ -47,7 +47,7 @@ jobs:
           import xml.etree.ElementTree as ET
           from pathlib import Path
 
-          root = ET.parse(Path('plugin.audio.koozer/addon.xml')).getroot()
+          root = ET.parse(Path('addon.xml')).getroot()
           print(f"ADDON_ID={root.attrib['id']}")
           print(f"ADDON_VERSION={root.attrib['version']}")
           PY
@@ -176,7 +176,7 @@ jobs:
           ADDON_VERSION: ${{ steps.version.outputs.build }}
         run: |
           mkdir -p build/${ADDON_ID}
-          rsync -a ./plugin.audio.koozer/ build/${ADDON_ID}/ \
+          rsync -a ./ build/${ADDON_ID}/ \
             --exclude '.git' \
             --exclude '.github' \
             --exclude 'build' \
@@ -184,8 +184,8 @@ jobs:
             --exclude 'requirements-dev.txt' \
             --exclude '*.md'
 
-          cp plugin.audio.koozer/icon.png "build/${ADDON_ID}/icon.png"
-          cp plugin.audio.koozer/fanart.jpg "build/${ADDON_ID}/fanart.jpg"
+          cp icon.png "build/${ADDON_ID}/icon.png"
+          cp fanart.jpg "build/${ADDON_ID}/fanart.jpg"
 
           python - <<'PY'
           import xml.etree.ElementTree as ET
@@ -252,14 +252,14 @@ jobs:
 
           python tools/update_addon_version.py "$ADDON_VERSION"
 
-          if git diff --quiet plugin.audio.koozer/addon.xml; then
-            echo "plugin.audio.koozer/addon.xml already at version $ADDON_VERSION"
+          if git diff --quiet addon.xml; then
+            echo "addon.xml already at version $ADDON_VERSION"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add plugin.audio.koozer/addon.xml
+          git add addon.xml
           git commit -m "chore: update addon version to $ADDON_VERSION"
           git push origin "$DEFAULT_BRANCH"
 
