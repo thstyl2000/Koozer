@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings version="2">
-    <category id="charts" label="32001">
-        <setting id="market"
-                 type="string"
-                 label="32010"
-                 default=""
-                 help="32012"/>
-        <setting id="chart_limit"
-                 type="integer"
-                 label="32011"
-                 default="25"
-                 range="5,50,1"/>
-    </category>
+    <section id="general">
+        <category id="charts" label="32001">
+            <group id="1">
+                <setting id="market"
+                         type="string"
+                         label="32010"
+                         default=""
+                         help="32012"/>
+                <setting id="chart_limit"
+                         type="integer"
+                         label="32011"
+                         default="25"
+                         range="5,50,1"/>
+            </group>
+        </category>
+    </section>
 </settings>
