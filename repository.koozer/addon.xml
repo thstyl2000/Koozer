@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<addon id="repository.koozer" version="1.0.0" name="Koozer Repository" provider-name="Koozer Team">
+<addon id="repository.koozer" version="0.0.0" name="Koozer Repository" provider-name="Koozer Team">
   <requires>
     <import addon="xbmc.addon" version="20.0.0" />
   </requires>
