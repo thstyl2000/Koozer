@@ -66,9 +66,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--assets-source",
-        default=Path("."),
+        default=Path("plugin.audio.koozer"),
         type=Path,
-        help="Directory containing the shared icon and fanart assets (defaults to addon root)",
+        help=(
+            "Directory containing the shared icon and fanart assets "
+            "(defaults to plugin.audio.koozer)"
+        ),
     )
     parser.add_argument(
         "--no-parallel",
