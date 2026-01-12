@@ -8,14 +8,14 @@
                          label="32010"
                          default=""
                          help="32012">
-                    <control type="edit" />
+                    <control type="edit" format="string" />
                 </setting>
                 <setting id="chart_limit"
                          type="integer"
                          label="32011"
                          default="25"
                          range="5,50,1">
-                    <control type="spin" />
+                    <control type="spin" format="integer" />
                 </setting>
             </group>
         </category>
