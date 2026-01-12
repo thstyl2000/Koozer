@@ -41,20 +41,19 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
 - Both nightly and release runs expect a clean working tree before publishing. Create and push a properly formatted tag to bump the version for a release instead of editing `addon.xml`; the workflow will inject the tag-derived version (or the version from `addon.xml` if none exist) into the packaged artifacts automatically.
 - Before tagging a release, update `addon.xml`'s `<news>` entry and the root-level `changelog.txt` with the same versioned notes to keep release metadata in sync.
 - Enable GitHub Pages for the repository (using the `gh-pages` branch created by the workflow) and point Kodi to the published URL to receive updates.
-- Package repository artifacts locally with the upstream Repository Tools by first creating an add-on ZIP (for example, `build/plugin.audio.koozer-0.0.0.zip`) and then running:
+- Package repository artifacts locally with the upstream Repository Tools by first creating an add-on ZIP for the repository feed (for example, `build/plugin.audio.koozer-0.0.0.zip`) and then running:
   ```bash
   python tools/package_repository_addon.py \
     --addon-zip build/plugin.audio.koozer-0.0.0.zip \
     --addon-version 0.0.0 \
     --output build/repository-addon
   ```
-  This builds `addons.xml` under `build/repository` and produces an installable repository add-on ZIP in `build/repository-addon`.
+  This builds `addons.xml` under `build/repository` and produces an installable repository add-on ZIP in `build/repository-addon`. The add-on ZIP used here is only for the repository feed and should not be distributed for standalone installation.
 
 ## Usage
 - Install the repository add-on for automatic updates:
-  1. Download the latest `repository-addon.zip` from the GitHub Releases page (or from the workflow artifacts if you are testing a nightly run).
+  1. Download the latest `repository.koozer-<version>.zip` from the GitHub Releases page.
   2. In Kodi, go to **Add-ons > Install from zip file** and select the downloaded repository ZIP.
   3. Once installed, open **Add-ons > Install from repository > Koozer Repository > Music add-ons > Koozer** to install the add-on itself; future updates will be delivered automatically through the repository.
-- Install manually as a ZIP from the Kodi add-on browser if you prefer a one-off install.
 - Configure the preferred country code and chart size from the add-on settings dialog.
 - Browse charts from the home directory entry and play available preview URLs where offered by the Deezer API.
