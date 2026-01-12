@@ -1,4 +1,4 @@
-name: Build, Release, and Publish Repository
+name: Build and Publish Repository
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
           - 'no'
           - 'yes'
       release_tag:
-        description: 'Tag to use for the release when publishing manually (defaults to add-on version)'
+        description: 'Tag to use for the release when publishing manually (defaults to v<addon version>)'
         required: false
         type: string
 
@@ -31,8 +31,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  release_and_publish:
+  dev_publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      REPOSITORY_ADDON_VERSION: 1.0.0
 
     steps:
       - name: Checkout repository
@@ -60,10 +63,9 @@ jobs:
           echo "id=$ADDON_ID" >> "$GITHUB_OUTPUT"
           echo "version=$ADDON_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Determine build version
+      - name: Determine dev build version
         id: version
         run: |
-          RAW_TAG=$(git describe --tags --match "v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null || true)
           LATEST_TAG=$(git tag --list \
             "v[0-9]*.[0-9]*.[0-9]*" \
             "v[0-9]*.[0-9]*.[0-9]*-alpha.*" \
@@ -76,63 +78,169 @@ jobs:
             BASE_VERSION="${{ steps.metadata.outputs.version }}"
           fi
 
-          RELEASE_TAG=""
-          PRERELEASE_TAG=""
-          PRERELEASE="false"
-          REF="${GITHUB_REF:-}"
-
-          if [[ "$REF" == refs/tags/* ]]; then
-            RELEASE_TAG="${REF#refs/tags/}"
-            BASE_VERSION="${RELEASE_TAG#v}"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.publish_release }}" == "yes" ]]; then
-            if [[ -n "${{ inputs.release_tag }}" ]]; then
-              RELEASE_TAG="${{ inputs.release_tag }}"
-              BASE_VERSION="${RELEASE_TAG#v}"
-            elif [[ -n "$RAW_TAG" ]]; then
-              RELEASE_TAG="$RAW_TAG"
-              BASE_VERSION="${RELEASE_TAG#v}"
-            else
-              RELEASE_TAG="v${BASE_VERSION}"
-            fi
+          if [[ -n "$LATEST_TAG" && "$LATEST_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-alpha\.([0-9]+)$ ]]; then
+            NEXT_ALPHA=$((BASH_REMATCH[2] + 1))
           else
-            if [[ -n "$LATEST_TAG" && "$LATEST_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-alpha\.([0-9]+))?$ ]]; then
-              BASE_VERSION="${BASH_REMATCH[1]}"
-              if [[ -n "${BASH_REMATCH[3]}" ]]; then
-                NEXT_ALPHA=$((BASH_REMATCH[3] + 1))
-              else
-                NEXT_ALPHA=1
-              fi
-            else
-              NEXT_ALPHA=1
-            fi
-
-            PRERELEASE_TAG="v${BASE_VERSION}-alpha.${NEXT_ALPHA}"
-            PRERELEASE="true"
+            NEXT_ALPHA=1
           fi
 
-          SUFFIX=""
-          if [[ -z "$RELEASE_TAG" && -n "$PRERELEASE_TAG" ]]; then
-            SUFFIX="-alpha.${NEXT_ALPHA}"
-          fi
-
-          BUILD_VERSION="${BASE_VERSION}${SUFFIX}"
+          BUILD_VERSION="${BASE_VERSION}-alpha.${NEXT_ALPHA}"
 
           echo "Base version: $BASE_VERSION"
-          echo "Version suffix: ${SUFFIX:-<none>}"
+          echo "Build version: $BUILD_VERSION"
+
+          echo "base=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create distributable ZIP
+        env:
+          ADDON_ID: ${{ steps.metadata.outputs.id }}
+          ADDON_VERSION: ${{ steps.version.outputs.build }}
+        run: |
+          mkdir -p build/${ADDON_ID}
+          rsync -a ./plugin.audio.koozer/ build/${ADDON_ID}/ \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'build' \
+            --exclude 'tests' \
+            --exclude 'requirements-dev.txt' \
+            --exclude '*.md'
+
+          cp plugin.audio.koozer/icon.png "build/${ADDON_ID}/icon.png"
+          cp plugin.audio.koozer/fanart.jpg "build/${ADDON_ID}/fanart.jpg"
+
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          import os
+
+          addon_id = os.environ["ADDON_ID"]
+          addon_version = os.environ["ADDON_VERSION"]
+
+          build_dir = Path("build") / addon_id
+          addon_xml = build_dir / 'addon.xml'
+
+          tree = ET.parse(addon_xml)
+          root = tree.getroot()
+
+          previous_version = root.attrib.get('version')
+          root.attrib['version'] = addon_version
+
+          try:
+              ET.indent(tree)
+          except AttributeError:
+              pass
+
+          tree.write(addon_xml, encoding='UTF-8', xml_declaration=True)
+
+          print(f"Updated staged addon.xml version from {previous_version} to {addon_version}")
+          PY
+
+          cd build
+          zip -r "${ADDON_ID}-${ADDON_VERSION}.zip" "${ADDON_ID}"
+
+      - name: Build dev repository artifacts and add-on
+        env:
+          ADDON_ID: ${{ steps.metadata.outputs.id }}
+          ADDON_VERSION: ${{ steps.version.outputs.build }}
+        run: |
+          python tools/package_repository_addon.py \
+            --addon-zip "build/${ADDON_ID}-${ADDON_VERSION}.zip" \
+            --addon-version "${REPOSITORY_ADDON_VERSION}" \
+            --repository-source repository.koozer.dev \
+            --output build/repository-addon \
+            --repository-output build/repository
+
+      - name: Publish dev repository to repo-dev branch
+        env:
+          TARGET_BRANCH: repo-dev
+          TARGET_ROOT: repository-dev
+        run: |
+          git fetch origin "${TARGET_BRANCH}" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${TARGET_BRANCH}"; then
+            git switch -c "${TARGET_BRANCH}" --track "origin/${TARGET_BRANCH}"
+          else
+            git switch --orphan "${TARGET_BRANCH}"
+          fi
+
+          git rm -rf . || true
+          rm -rf "${TARGET_ROOT}"
+          mkdir -p "${TARGET_ROOT}"
+          cp -R build/repository "${TARGET_ROOT}/repository"
+          mkdir -p "${TARGET_ROOT}/repository-addon"
+          cp -R build/repository-addon/*.zip "${TARGET_ROOT}/repository-addon/"
+
+          git add "${TARGET_ROOT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --cached --quiet; then
+            echo "No dev repository changes to publish."
+            exit 0
+          fi
+
+          git commit -m "chore: update dev repository feed"
+          git push origin "${TARGET_BRANCH}"
+
+  stable_publish:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    env:
+      REPOSITORY_ADDON_VERSION: 1.0.0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read add-on metadata
+        id: metadata
+        run: |
+          python - <<'PY' > /tmp/addon_meta.sh
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = ET.parse(Path('plugin.audio.koozer/addon.xml')).getroot()
+          print(f"ADDON_ID={root.attrib['id']}")
+          print(f"ADDON_VERSION={root.attrib['version']}")
+          PY
+
+          source /tmp/addon_meta.sh
+
+          echo "Addon ID: $ADDON_ID"
+          echo "Addon version: $ADDON_VERSION"
+
+          echo "id=$ADDON_ID" >> "$GITHUB_OUTPUT"
+          echo "version=$ADDON_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Determine stable build version
+        id: version
+        run: |
+          RELEASE_TAG=""
+          BASE_VERSION="${{ steps.metadata.outputs.version }}"
+
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+            BASE_VERSION="${RELEASE_TAG#v}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.release_tag }}" ]]; then
+            RELEASE_TAG="${{ inputs.release_tag }}"
+            BASE_VERSION="${RELEASE_TAG#v}"
+          fi
+
+          BUILD_VERSION="${BASE_VERSION}"
+
+          echo "Base version: $BASE_VERSION"
           echo "Build version: $BUILD_VERSION"
 
           if [[ -n "$RELEASE_TAG" ]]; then
             echo "Release tag: $RELEASE_TAG"
             echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           fi
-          if [[ -n "$PRERELEASE_TAG" ]]; then
-            echo "Pre-release tag: $PRERELEASE_TAG"
-            echo "prerelease_tag=$PRERELEASE_TAG" >> "$GITHUB_OUTPUT"
-            echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
-          fi
 
           echo "base=$BASE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Preflight release checks
@@ -140,8 +248,7 @@ jobs:
         run: |
           TAG_NAME="${{ steps.version.outputs.tag }}"
           if [[ -z "$TAG_NAME" ]]; then
-            echo "No release tag provided for publishing"
-            exit 1
+            TAG_NAME="v${{ steps.version.outputs.base }}"
           fi
 
           if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -154,21 +261,6 @@ jobs:
             git status --short
             exit 1
           fi
-
-      - name: Determine release tag
-        id: release_tag
-        run: |
-          TAG_NAME="${{ steps.version.outputs.tag || steps.version.outputs.prerelease_tag || github.ref_name }}"
-
-          echo "Using tag: ${TAG_NAME}"
-          echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
-
-      - name: Set addon.xml version for release build
-        if: steps.version.outputs.tag != ''
-        env:
-          ADDON_VERSION: ${{ steps.version.outputs.base }}
-        run: |
-          python tools/update_addon_version.py "$ADDON_VERSION"
 
       - name: Create distributable ZIP
         env:
@@ -224,44 +316,22 @@ jobs:
           name: ${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
           path: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
 
-      - name: Build repository artifacts and add-on with Repository Tools
+      - name: Build repository artifacts and add-on
         env:
           ADDON_ID: ${{ steps.metadata.outputs.id }}
           ADDON_VERSION: ${{ steps.version.outputs.build }}
         run: |
           python tools/package_repository_addon.py \
             --addon-zip "build/${ADDON_ID}-${ADDON_VERSION}.zip" \
-            --addon-version "${ADDON_VERSION}" \
+            --addon-version "${REPOSITORY_ADDON_VERSION}" \
             --output build/repository-addon \
             --repository-output build/repository
 
       - name: Upload repository add-on artifact
         uses: actions/upload-artifact@v4
         with:
-          name: repository.koozer-${{ steps.version.outputs.build }}.zip
-          path: build/repository-addon/repository.koozer-${{ steps.version.outputs.build }}.zip
-
-      - name: Update addon.xml release version
-        if: steps.version.outputs.tag != ''
-        env:
-          ADDON_VERSION: ${{ steps.version.outputs.base }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          git fetch origin "$DEFAULT_BRANCH"
-          git checkout "$DEFAULT_BRANCH"
-
-          python tools/update_addon_version.py "$ADDON_VERSION"
-
-          if git diff --quiet plugin.audio.koozer/addon.xml; then
-            echo "plugin.audio.koozer/addon.xml already at version $ADDON_VERSION"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add plugin.audio.koozer/addon.xml
-          git commit -m "chore: update addon version to $ADDON_VERSION"
-          git push origin "$DEFAULT_BRANCH"
+          name: repository.koozer-${{ env.REPOSITORY_ADDON_VERSION }}.zip
+          path: build/repository-addon/repository.koozer-${{ env.REPOSITORY_ADDON_VERSION }}.zip
 
       - name: Verify repository output
         env:
@@ -286,14 +356,13 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Publish release asset
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes') || steps.version.outputs.prerelease == 'true'
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             build/repository-addon/*.zip
-          tag_name: ${{ steps.release_tag.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.tag || format('v{0}', steps.version.outputs.base) }}
           name: Koozer ${{ steps.version.outputs.base }}
-          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           overwrite_files: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
