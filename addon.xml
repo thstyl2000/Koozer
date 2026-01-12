@@ -16,7 +16,6 @@
       <fanart>fanart.jpg</fanart>
     </assets>
   </extension>
-  <extension point="xbmc.addon.settings" library="resources/settings.xml" />
   <extension point="xbmc.python.pluginsource" library="default.py">
     <provides>audio</provides>
   </extension>
