@@ -36,7 +36,7 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
 
 ### Repository publishing
 - The GitHub Actions workflow distinguishes between dev and stable channels.
-- Merges to `main` build alpha-tagged add-on zips (for example, `1.2.3-alpha.4`) and publish the repository feed plus add-on zips to the `repo-dev` branch under `repository-dev/`. The `repository.koozer.dev` installer points to those raw artifacts on `raw.githubusercontent.com`.
+- Merges to `main` build alpha-tagged add-on zips (for example, `1.2.3-alpha.4`) and publish the repository feed plus add-on zips to the `dev` branch under `repository-dev/`. The `repository.koozer.dev` installer points to those raw artifacts on `raw.githubusercontent.com`.
 - Stable publishing runs only on manual dispatches and version tags (`vMAJOR.MINOR.PATCH`). These runs build release artifacts and deploy the repository feed to GitHub Pages (`gh-pages`) for the stable `repository.koozer` installer.
 - Repository add-on installers are treated as unversioned; their `addon.xml` versions remain fixed (currently `1.0.0`) regardless of dev/stable builds.
 - Before tagging a release, update `plugin.audio.koozer/addon.xml`'s `<news>` entry and `plugin.audio.koozer/changelog.txt` with the same versioned notes to keep release metadata in sync.
@@ -54,7 +54,7 @@ Keep Kodi-specific imports contained to the plugin entry modules so that tests c
   2. In Kodi, go to **Add-ons > Install from zip file** and select the downloaded repository ZIP.
   3. Once installed, open **Add-ons > Install from repository > Koozer Repository > Music add-ons > Koozer** to install the add-on itself; future updates will be delivered automatically through the stable repository.
 - Install the dev repository add-on for alpha updates:
-  1. Download `repository.koozer.dev-1.0.0.zip` from `https://raw.githubusercontent.com/thstyl2000/Koozer/repo-dev/repository-dev/repository-addon/repository.koozer.dev-1.0.0.zip`.
+  1. Download `repository.koozer.dev-1.0.0.zip` from `https://raw.githubusercontent.com/thstyl2000/Koozer/dev/repository-dev/repository-addon/repository.koozer.dev-1.0.0.zip`.
   2. In Kodi, go to **Add-ons > Install from zip file** and select the downloaded repository ZIP.
   3. Once installed, open **Add-ons > Install from repository > Koozer Dev Repository > Music add-ons > Koozer** to install the dev build; future updates will follow the alpha feed.
 - Configure the preferred country code and chart size from the add-on settings dialog.
