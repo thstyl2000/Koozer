@@ -64,6 +64,8 @@ class KoozerAddon:
     def _list_charts(self) -> None:
         country = self._addon.getSettingString("market").strip()
         limit = self._addon.getSettingInt("chart_limit")
+        if limit <= 0:
+            limit = 25
         try:
             tracks = self._client.get_chart_tracks(limit=limit, country=country or None)
         except DeezerError as error:

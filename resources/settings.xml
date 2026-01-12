@@ -4,10 +4,9 @@
                  type="string"
                  label="32010"
                  default=""
-                 option="input"
                  help="32012"/>
         <setting id="chart_limit"
-                 type="number"
+                 type="integer"
                  label="32011"
                  default="25"
                  range="5,50,1"/>
