@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ADDON_XML = [
-    ROOT / "addon.xml",
+    ROOT / "plugin.audio.koozer" / "addon.xml",
     ROOT / "repository.koozer" / "addon.xml",
 ]
 
