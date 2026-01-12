@@ -152,9 +152,9 @@ jobs:
             --output build/repository-addon \
             --repository-output build/repository
 
-      - name: Publish dev repository to dev branch
+      - name: Publish dev repository to repo-dev branch
         env:
-          TARGET_BRANCH: dev
+          TARGET_BRANCH: repo-dev
           TARGET_ROOT: repository-dev
         run: |
           git fetch origin "${TARGET_BRANCH}" || true
