@@ -56,10 +56,13 @@ class DeezerClient:
         query = urllib.parse.urlencode(params)
         url = f"{self._base_url}/chart?{query}"
         payload = self._request_json(url)
-        track_nodes: Iterable[Dict[str, object]] = payload.get("tracks", {}).get(
-            "data", []
-        )
-        return [self._parse_track(node) for node in track_nodes]
+        tracks_payload = payload.get("tracks")
+        if not isinstance(tracks_payload, dict):
+            return []
+        track_nodes = tracks_payload.get("data", [])
+        if not isinstance(track_nodes, list):
+            return []
+        return [self._parse_track(node) for node in track_nodes if isinstance(node, dict)]
 
     def _request_json(self, url: str) -> Dict[str, object]:
         try:
@@ -90,15 +93,31 @@ class DeezerClient:
         artist = self._extract_nested_title(node, "artist")
         preview = node.get("preview")
         preview_url = preview if isinstance(preview, str) and preview else None
+        duration = self._coerce_int(node.get("duration"))
 
         return Track(
             identifier=str(node.get("id", "")),
             title=str(node.get("title", "")),
             artist=artist,
             album=album,
-            duration=int(node.get("duration", 0)),
+            duration=duration,
             preview_url=preview_url,
         )
+
+    @staticmethod
+    def _coerce_int(value: object, default: int = 0) -> int:
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return default
+        return default
 
     @staticmethod
     def _extract_nested_title(node: Dict[str, object], key: str) -> str:
