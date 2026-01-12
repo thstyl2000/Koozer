@@ -62,8 +62,8 @@ class KoozerAddon:
         xbmcplugin.endOfDirectory(self._handle, succeeded=True)
 
     def _list_charts(self) -> None:
-        country = self._addon.getSettingString("market").strip()
-        limit = self._addon.getSettingInt("chart_limit")
+        country = self._get_setting_string("market").strip()
+        limit = self._get_setting_int("chart_limit")
         if limit <= 0:
             limit = 25
         try:
@@ -140,6 +140,22 @@ class KoozerAddon:
             time=5000,
             sound=False,
         )
+
+    def _get_setting_string(self, setting_id: str) -> str:
+        try:
+            return self._addon.getSettingString(setting_id)
+        except (AttributeError, TypeError):
+            return self._addon.getSetting(setting_id)
+
+    def _get_setting_int(self, setting_id: str) -> int:
+        try:
+            return self._addon.getSettingInt(setting_id)
+        except (AttributeError, TypeError, ValueError):
+            raw_value = self._addon.getSetting(setting_id)
+            try:
+                return int(raw_value)
+            except (TypeError, ValueError):
+                return 0
 
 
 def run_plugin() -> None:
