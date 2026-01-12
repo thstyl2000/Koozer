@@ -7,12 +7,16 @@
                          type="string"
                          label="32010"
                          default=""
-                         help="32012"/>
+                         help="32012">
+                    <control type="edit" />
+                </setting>
                 <setting id="chart_limit"
                          type="integer"
                          label="32011"
                          default="25"
-                         range="5,50,1"/>
+                         range="5,50,1">
+                    <control type="spin" />
+                </setting>
             </group>
         </category>
     </section>
