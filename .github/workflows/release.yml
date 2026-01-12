@@ -64,14 +64,21 @@ jobs:
         id: version
         run: |
           RAW_TAG=$(git describe --tags --match "v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 2>/dev/null || true)
+          LATEST_TAG=$(git tag --list \
+            "v[0-9]*.[0-9]*.[0-9]*" \
+            "v[0-9]*.[0-9]*.[0-9]*-alpha.*" \
+            --sort=-v:refname | head -n1 || true)
 
-          if [[ -n "$RAW_TAG" ]]; then
-            BASE_VERSION="${RAW_TAG#v}"
+          if [[ -n "$LATEST_TAG" ]]; then
+            BASE_VERSION="${LATEST_TAG#v}"
+            BASE_VERSION="${BASE_VERSION%%-alpha.*}"
           else
             BASE_VERSION="${{ steps.metadata.outputs.version }}"
           fi
 
           RELEASE_TAG=""
+          PRERELEASE_TAG=""
+          PRERELEASE="false"
           REF="${GITHUB_REF:-}"
 
           if [[ "$REF" == refs/tags/* ]]; then
@@ -87,11 +94,25 @@ jobs:
             else
               RELEASE_TAG="v${BASE_VERSION}"
             fi
+          else
+            if [[ -n "$LATEST_TAG" && "$LATEST_TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-alpha\.([0-9]+))?$ ]]; then
+              BASE_VERSION="${BASH_REMATCH[1]}"
+              if [[ -n "${BASH_REMATCH[3]}" ]]; then
+                NEXT_ALPHA=$((BASH_REMATCH[3] + 1))
+              else
+                NEXT_ALPHA=1
+              fi
+            else
+              NEXT_ALPHA=1
+            fi
+
+            PRERELEASE_TAG="v${BASE_VERSION}-alpha.${NEXT_ALPHA}"
+            PRERELEASE="true"
           fi
 
           SUFFIX=""
-          if [[ -z "$RELEASE_TAG" ]]; then
-            SUFFIX=".dev${{ github.run_number }}"
+          if [[ -z "$RELEASE_TAG" && -n "$PRERELEASE_TAG" ]]; then
+            SUFFIX="-alpha.${NEXT_ALPHA}"
           fi
 
           BUILD_VERSION="${BASE_VERSION}${SUFFIX}"
@@ -103,6 +124,11 @@ jobs:
           if [[ -n "$RELEASE_TAG" ]]; then
             echo "Release tag: $RELEASE_TAG"
             echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ -n "$PRERELEASE_TAG" ]]; then
+            echo "Pre-release tag: $PRERELEASE_TAG"
+            echo "prerelease_tag=$PRERELEASE_TAG" >> "$GITHUB_OUTPUT"
+            echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
           fi
 
           echo "base=$BASE_VERSION" >> "$GITHUB_OUTPUT"
@@ -132,7 +158,7 @@ jobs:
       - name: Determine release tag
         id: release_tag
         run: |
-          TAG_NAME="${{ steps.version.outputs.tag || github.ref_name }}"
+          TAG_NAME="${{ steps.version.outputs.tag || steps.version.outputs.prerelease_tag || github.ref_name }}"
 
           echo "Using tag: ${TAG_NAME}"
           echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
@@ -254,13 +280,14 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Publish release asset
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes')
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes') || steps.version.outputs.prerelease == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: |
             build/repository-addon/*.zip
           tag_name: ${{ steps.release_tag.outputs.tag }}
           name: Koozer ${{ steps.version.outputs.base }}
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           overwrite_files: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release == 'yes' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
