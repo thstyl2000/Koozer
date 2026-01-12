@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <settings version="2">
-    <category label="32001">
+    <category id="charts" label="32001">
         <setting id="market"
                  type="string"
                  label="32010"
