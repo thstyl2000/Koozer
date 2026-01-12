@@ -218,6 +218,12 @@ jobs:
           cd build
           zip -r "${ADDON_ID}-${ADDON_VERSION}.zip" "${ADDON_ID}"
 
+      - name: Upload add-on ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
+          path: build/${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.build }}.zip
+
       - name: Build repository artifacts and add-on with Repository Tools
         env:
           ADDON_ID: ${{ steps.metadata.outputs.id }}
