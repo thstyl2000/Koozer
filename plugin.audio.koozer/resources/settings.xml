@@ -3,7 +3,7 @@
     <section id="general">
         <category id="charts" label="32001">
             <group id="1">
-                <setting type="text" id="market" label="30672" default="" help="30674">
+                <setting id="market" type="string" label="30672" help="30674">
                     <level>0</level>
                     <default/>
                 	<constraints>
@@ -13,14 +13,14 @@
 		                <heading>30672</heading>
 	                </control>
                 </setting>
-                <setting type="number" id="chart_limit" label="30673" default="25">
+                <setting id="chart_limit" type="integer" label="30673" help="">
                     <level>0</level>
-                    <default/>
+                    <default>25<default/>
                 	<constraints>
                         <allowempty>true</allowempty>
                 	</constraints>
-                    <control type="edit" format="string">
-		                <heading>30672</heading>
+                    <control type="edit" format="integer">
+		                <heading>30673</heading>
 	                </control>
                 </setting>
             </group>
