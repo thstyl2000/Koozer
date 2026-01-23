@@ -5,13 +5,13 @@
             <group id="1">
                 <setting id="market"
                          type="text"
-                         label="32010"
+                         label="30672"
                          default=""
-                         help="32012">
+                         help="30674">
                 </setting>
                 <setting id="chart_limit"
                          type="integer"
-                         label="32011"
+                         label="30673"
                          default="25"
                          range="5,50,1">
                 </setting>
