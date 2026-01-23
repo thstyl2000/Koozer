@@ -10,10 +10,9 @@
                          help="30674">
                 </setting>
                 <setting id="chart_limit"
-                         type="integer"
+                         type="number"
                          label="30673"
-                         default="25"
-                         range="5,50,1">
+                         default="25">
                 </setting>
             </group>
         </category>
