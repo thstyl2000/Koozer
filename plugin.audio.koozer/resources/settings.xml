@@ -4,7 +4,7 @@
         <category id="charts" label="32001">
             <group id="1">
                 <setting id="market"
-                         type="string"
+                         type="text"
                          label="32010"
                          default=""
                          help="32012">
