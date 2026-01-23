@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<settings version="2">
+<settings version="1">
     <section id="general">
         <category id="charts" label="32001">
             <group id="1">
-                <setting id="market"
-                         type="text"
+                <setting type="text"
+                         id="market"
                          label="30672"
                          default=""
                          help="30674">
                 </setting>
-                <setting id="chart_limit"
-                         type="number"
+                <setting type="number"
+                         id="chart_limit"
                          label="30673"
                          default="25">
                 </setting>
