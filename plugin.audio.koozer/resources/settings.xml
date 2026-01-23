@@ -15,7 +15,7 @@
                 </setting>
                 <setting id="chart_limit" type="integer" label="30673" help="">
                     <level>0</level>
-                    <default>25<default/>
+                    <default>25</default>
                 	<constraints>
                         <allowempty>true</allowempty>
                 	</constraints>
